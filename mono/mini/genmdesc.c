@@ -11,7 +11,6 @@
 #include <string.h>
 #include <mono/metadata/opcodes.h>
 
-int __nacl_thread_suspension_needed = 0;
 void __nacl_suspend_thread_if_needed() {}
 
 #define MINI_OP(a,b,dest,src1,src2) b,
