@@ -93,20 +93,21 @@ endif
 
 if JIT_SUPPORTED
 
-if SUPPORT_SGEN
-sgen_binaries = mono-sgen
-sgen_libraries = libmonosgen-2.0.la
-sgen_static_libraries = libmini-static.la $(sgenstatic_libs)
-endif
-
 if SUPPORT_BOEHM
 boehm_libraries = libmonoboehm-2.0.la
 boehm_static_libraries = libmini-static.la $(static_libs)
 boehm_binaries  = mono-boehm
+mono_bin_suffix = boehm
 endif
 
-#The mono uses sgen, while libmono remains boehm
+if SUPPORT_SGEN
+sgen_binaries = mono-sgen
+sgen_libraries = libmonosgen-2.0.la
+sgen_static_libraries = libmini-static.la $(sgenstatic_libs)
 mono_bin_suffix = sgen
+endif
+
+#The mono uses sgen by default, while libmono remains boehm
 libmono_suffix = boehm
 
 if DISABLE_EXECUTABLES
@@ -118,7 +119,7 @@ mono: mono-$(mono_bin_suffix)
 	ln -sf $< $@
 
 install-exec-hook:
-	ln -sf $(DESTDIR)$(bindir)/mono-$(mono_bin_suffix) $(DESTDIR)$(bindir)/mono
+	ln -sf $(DESTDIR)$(bindir)/`echo mono-$(mono_bin_suffix) | sed '$(transform)'` $(DESTDIR)$(bindir)/`echo mono | sed '$(transform)'`
 	(cd $(DESTDIR)$(libdir); for i in libmono$(libmono_suffix)*; do ln -sf $$i `echo $$i | sed s/$(libmono_suffix)//` ; done)
 endif
 
@@ -192,8 +193,10 @@ AM_CPPFLAGS = $(LIBGC_CPPFLAGS)
 mono_sgen_SOURCES = \
 	main-sgen.c
 
+if !NACL_CODEGEN
 mono_SOURCES = \
-	main-sgen.c
+  main-sgen.c
+endif
 
 mono_sgen_CFLAGS = $(AM_CFLAGS)
 
@@ -209,6 +212,7 @@ endif
 mono_boehm-main.$(OBJEXT): buildver-boehm.h
 endif
 
+if SUPPORT_SGEN
 if DISABLE_EXECUTABLES
 buildver-sgen.h: libmini-static.la $(monodir)/mono/metadata/libmonoruntimesgen.la
 else
@@ -216,6 +220,7 @@ buildver-sgen.h: libmini-static.la $(monodir)/mono/metadata/libmonoruntimesgen-s
 endif
 	@echo "const char *build_date = \"`date`\";" > buildver-sgen.h
 mono_sgen-main-sgen.$(OBJEXT): buildver-sgen.h
+endif
 
 if DTRACE_G_REQUIRED
 LIBMONO_DTRACE_OBJECT = .libs/mono-dtrace.$(OBJEXT)
@@ -236,7 +241,7 @@ MONO_LIB=$(boehm_static_libraries)
 MONO_SGEN_LIB=$(sgen_static_libraries)
 else 
 MONO_LIB=libmonoboehm-2.0.la
-MONO_LIBLIB=libmonosgen-2.0.la
+MONO_SGEN_LIB=libmonosgen-2.0.la
 endif
 
 if LOADED_LLVM

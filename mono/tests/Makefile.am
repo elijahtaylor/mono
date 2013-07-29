@@ -474,6 +474,7 @@ PLATFORM_DISABLED_TESTS+= appdomain-async-invoke.exe \
                           monitor.exe \
                           remoting4.exe \
                           threadpool-exceptions7.exe \
+                          unload-appdomain-on-shutdown.exe \
                           xdomain-threads.exe
 
 # pinvoke2 attaches a thread to the runtime, but
@@ -507,7 +508,8 @@ PLATFORM_DISABLED_TESTS+= pinvoke3.exe \
                           async_read.exe \
                           async-with-cb-throws.exe \
                           appdomain-unload-doesnot-raise-pending-events.exe \
-                          gsharing-valuetype-layout.exe
+                          gsharing-valuetype-layout.exe \
+                          gc-altstack.exe
 
 if X86
 # FIXME: There are problems with async callbacks and results on NaCl 32-bit
@@ -707,6 +709,9 @@ else
 test_2_1 :
 endif
 
+if NACL_CODEGEN
+test-sgen :
+else
 if AMD64
 test-sgen : sgen-tests
 else
@@ -718,6 +723,7 @@ test-sgen : sgen-tests
 else
 if S390x
 test-sgen : sgen-regular-tests
+endif
 endif
 endif
 endif
